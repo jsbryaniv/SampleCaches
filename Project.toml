@@ -6,3 +6,4 @@ version = "0.1.0"
 [deps]
 HDF5 = "f67ccb44-e63f-5c2f-98bd-6dc0ccc4ba2f"
 SparseArrays = "2f01184e-e22b-5df5-ae63-d93ebab69eaf"
+SimpleNamespaces = "d3458c95-1ac3-41d3-bc85-3c09f98c159b"
