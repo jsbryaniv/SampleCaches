@@ -20,7 +20,7 @@ function samplecache_initialize(self, variables)
     for field in fields_to_save
 
         # Get value of and type of field
-        value = variables[string(field)]
+        value = variables[Symbol(field)]
         type = eltype(value)
 
         # Create full dataset for field
@@ -42,7 +42,7 @@ function samplecache_initialize(self, variables)
     for field in fields_to_average
 
         # Get value of and type of field
-        value = variables[string(field)]
+        value = variables[Symbol(field)]
         
         # Create mean dataset for field
         create_dataset(meanfid, field, value)
@@ -52,9 +52,9 @@ function samplecache_initialize(self, variables)
     mapfid = create_group(fid, "MAP")
     for (key, value) in pairs(variables)
         try 
-            mapfid[String(key)] = value
+            mapfid[Symbol(key)] = value
         catch
-            mapfid[String(key)] = repr(value)
+            mapfid[Symbol(key)] = repr(value)
         end
     end
 
@@ -62,9 +62,9 @@ function samplecache_initialize(self, variables)
     lastfid = create_group(fid, "LAST")
     for (key, value) in pairs(variables)
         try 
-            lastfid[String(key)] = value
+            lastfid[Symbol(key)] = value
         catch
-            lastfid[String(key)] = repr(value)
+            lastfid[Symbol(key)] = repr(value)
         end
     end
 
@@ -99,7 +99,7 @@ function samplecache_update(self, variables, iteration; isMAP=false)
     for field in fields_to_save
 
         # Get value of field
-        value = variables[string(field)]
+        value = variables[Symbol(field)]
 
         # Save value to chunk
         chunk_dims = ndims(fid[field])
@@ -112,7 +112,7 @@ function samplecache_update(self, variables, iteration; isMAP=false)
     for field in fields_to_average
 
         # Get value of field
-        value = variables[string(field)]
+        value = variables[Symbol(field)]
         oldmean = meanfid[field]
 
         # Update mean and variance
@@ -123,11 +123,11 @@ function samplecache_update(self, variables, iteration; isMAP=false)
     # Save current iteration to last
     varfid = fid["LAST"]
     for (key, value) in pairs(variables)
-        delete_object(varfid, String(key))
+        delete_object(varfid, Symbol(key))
         try
-            varfid[String(key)] = value
+            varfid[Symbol(key)] = value
         catch
-            varfid[String(key)] = repr(value)
+            varfid[Symbol(key)] = repr(value)
         end
     end
 
@@ -135,11 +135,11 @@ function samplecache_update(self, variables, iteration; isMAP=false)
     if isMAP
         varfid = fid["MAP"]
         for (key, value) in pairs(variables)
-            delete_object(varfid, String(key))
+            delete_object(varfid, Symbol(key))
             try
-                varfid[String(key)] = value
+                varfid[Symbol(key)] = value
             catch
-                varfid[String(key)] = repr(value)
+                varfid[Symbol(key)] = repr(value)
             end
         end
     end
