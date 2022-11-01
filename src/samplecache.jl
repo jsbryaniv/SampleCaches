@@ -11,7 +11,7 @@ function samplecache_initialize(self, variables)
     num_iterations = self.num_iterations
 
     # Ensure variables is a dictionary
-    variables = Dict(variables)
+    variables = Dict{Symbol, Any}([(Symbol(key), val) for (key, val) in pairs(variables)])
 
     # Create H5 file
     fid = h5open(path*name, "w")
@@ -90,7 +90,7 @@ function samplecache_update(self, variables, iteration; isMAP=false)
     end
 
     # Ensure variables is a dictionary
-    variables = Dict(variables)
+    variables = Dict{Symbol, Any}([(Symbol(key), val) for (key, val) in pairs(variables)])
         
     # Open the H5 file
     fid = h5open(path*name, "r+")
@@ -112,7 +112,7 @@ function samplecache_update(self, variables, iteration; isMAP=false)
     for field in fields_to_average
 
         # Get value of field
-        value = variables[String(field)]
+        value = variables[string(field)]
         oldmean = meanfid[field]
 
         # Update mean and variance
@@ -165,15 +165,15 @@ function samplecache_get(self, field)
     if lowercase(field) == "map"
         # If MAP is requested then get MAP group
         varfid = fid["MAP"]
-        output = Dict([(Symbol(key), read(varfid[key])) for key in keys(varfid)])
+        output = Dict{Symbol, Any}([(Symbol(key), read(varfid[key])) for key in keys(varfid)])
     elseif lowercase(field) == "last"
         # If Last is requested then get Last group
         varfid = fid["LAST"]
-        output = Dict([(Symbol(key), read(varfid[key])) for key in keys(varfid)])
+        output = Dict{Symbol, Any}([(Symbol(key), read(varfid[key])) for key in keys(varfid)])
     elseif lowercase(field) == "mean"
         # If Last is requested then get Last group
         varfid = fid["MEAN"]
-        output = Dict([(Symbol(key), read(varfid[key])) for key in keys(varfid)])
+        output = Dict{Symbol, Any}([(Symbol(key), read(varfid[key])) for key in keys(varfid)])
     elseif lowercase(field) == "fid"
         # If fid is requested then return fid
         return fid
