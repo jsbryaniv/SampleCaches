@@ -113,7 +113,7 @@ function samplecache_update(self, variables, iteration; isMAP=false)
 
         # Get value of field
         value = variables[Symbol(field)]
-        oldmean = meanfid[field]
+        oldmean = read(meanfid[field])
 
         # Update mean and variance
         delete_object(meanfid, field)
