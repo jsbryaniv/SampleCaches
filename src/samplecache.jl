@@ -52,9 +52,9 @@ function samplecache_initialize(self, variables)
     mapfid = create_group(fid, "MAP")
     for (key, value) in pairs(variables)
         try 
-            mapfid[Symbol(key)] = value
+            mapfid[string(key)] = value
         catch
-            mapfid[Symbol(key)] = repr(value)
+            mapfid[string(key)] = repr(value)
         end
     end
 
@@ -62,9 +62,9 @@ function samplecache_initialize(self, variables)
     lastfid = create_group(fid, "LAST")
     for (key, value) in pairs(variables)
         try 
-            lastfid[Symbol(key)] = value
+            lastfid[string(key)] = value
         catch
-            lastfid[Symbol(key)] = repr(value)
+            lastfid[string(key)] = repr(value)
         end
     end
 
@@ -123,11 +123,11 @@ function samplecache_update(self, variables, iteration; isMAP=false)
     # Save current iteration to last
     varfid = fid["LAST"]
     for (key, value) in pairs(variables)
-        delete_object(varfid, Symbol(key))
+        delete_object(varfid, string(key))
         try
-            varfid[Symbol(key)] = value
+            varfid[string(key)] = value
         catch
-            varfid[Symbol(key)] = repr(value)
+            varfid[string(key)] = repr(value)
         end
     end
 
@@ -135,11 +135,11 @@ function samplecache_update(self, variables, iteration; isMAP=false)
     if isMAP
         varfid = fid["MAP"]
         for (key, value) in pairs(variables)
-            delete_object(varfid, Symbol(key))
+            delete_object(varfid, string(key))
             try
-                varfid[Symbol(key)] = value
+                varfid[string(key)] = value
             catch
-                varfid[Symbol(key)] = repr(value)
+                varfid[string(key)] = repr(value)
             end
         end
     end
@@ -165,15 +165,15 @@ function samplecache_get(self, field)
     if lowercase(field) == "map"
         # If MAP is requested then get MAP group
         varfid = fid["MAP"]
-        output = Dict{Symbol, Any}([(Symbol(key), read(varfid[key])) for key in keys(varfid)])
+        output = Dict{Symbol, Any}([(Symbol(key), read(varfid[string(key)])) for key in keys(varfid)])
     elseif lowercase(field) == "last"
         # If Last is requested then get Last group
         varfid = fid["LAST"]
-        output = Dict{Symbol, Any}([(Symbol(key), read(varfid[key])) for key in keys(varfid)])
+        output = Dict{Symbol, Any}([(Symbol(key), read(varfid[string(key)])) for key in keys(varfid)])
     elseif lowercase(field) == "mean"
         # If Last is requested then get Last group
         varfid = fid["MEAN"]
-        output = Dict{Symbol, Any}([(Symbol(key), read(varfid[key])) for key in keys(varfid)])
+        output = Dict{Symbol, Any}([(Symbol(key), read(varfid[string(key)])) for key in keys(varfid)])
     elseif lowercase(field) == "fid"
         # If fid is requested then return fid
         return fid
