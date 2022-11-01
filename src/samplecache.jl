@@ -200,7 +200,7 @@ mutable struct SampleCache
     initialize::Function
     update::Function
     get::Function
-    function SampleCache(name, num_iterations=nothing, fields_to_save=Any[], fields_to_average=Any[]; path=nothing)
+    function SampleCache(name, num_iterations, fields_to_save, fields_to_average, path)
 
         # Set extension for savename
         if lowercase(splitext(name)[2]) != ".h5"
@@ -243,6 +243,6 @@ mutable struct SampleCache
     end
 end
 function SampleCache(name; num_iterations=nothing, fields_to_save=[], fields_to_average=[], path=nothing)
-    self = SampleCache(name, num_iterations, fields_to_save, fields_to_average; path=path)
+    self = SampleCache(name, num_iterations, fields_to_save, fields_to_average, path)
     return self
 end
