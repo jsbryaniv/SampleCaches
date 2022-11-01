@@ -7,6 +7,7 @@ function samplecache_initialize(self, variables)
     name = self.name
     path = self.path
     fields_to_save = self.fields_to_save
+    fields_to_average = self.fields_to_average
     num_iterations = self.num_iterations
 
     # Ensure variables is a dictionary
@@ -36,6 +37,17 @@ function samplecache_initialize(self, variables)
         create_dataset(fid, field, dataset, chunk=chunk_size)
     end
 
+    # Create mean group for each field in fields_to_average
+    meanfid = create_group(fid, "MEAN")
+    for field in fields_to_average
+
+        # Get value of and type of field
+        value = variables[string(field)]
+        
+        # Create mean dataset for field
+        create_dataset(meanfid, field, value)
+    end
+
     # Create group for MAP
     mapfid = create_group(fid, "MAP")
     for (key, value) in pairs(variables)
@@ -46,13 +58,13 @@ function samplecache_initialize(self, variables)
         end
     end
 
-    # Create group for Last Iteration
-    mapfid = create_group(fid, "LAST")
+    # Create group for MAP
+    lastfid = create_group(fid, "LAST")
     for (key, value) in pairs(variables)
         try 
-            mapfid[String(key)] = value
+            lastfid[String(key)] = value
         catch
-            mapfid[String(key)] = repr(value)
+            lastfid[String(key)] = repr(value)
         end
     end
 
@@ -69,6 +81,8 @@ function samplecache_update(self, variables, iteration; isMAP=false)
     # Get attributes
     path = self.path
     name = self.name
+    fields_to_save = self.fields_to_save
+    fields_to_average = self.fields_to_average
 
     # Initialize if iteration is 1
     if iteration == 1
@@ -80,10 +94,6 @@ function samplecache_update(self, variables, iteration; isMAP=false)
         
     # Open the H5 file
     fid = h5open(path*name, "r+")
-
-    # find fields to save
-    fields_to_save = keys(fid)
-    fields_to_save = fields_to_save[lowercase.(fields_to_save) .!== "map"]
 
     # Save variables
     for field in fields_to_save
@@ -97,28 +107,39 @@ function samplecache_update(self, variables, iteration; isMAP=false)
         fid[field][chunk...] = value
     end
 
+    # Save running mean
+    meanfid = fid["MEAN"]
+    for field in fields_to_average
+
+        # Get value of field
+        value = variables[String(field)]
+        oldmean = meanfid[field]
+
+        # Update mean and variance
+        delete_object(meanfid, field)
+        meanfid[field] = ((iteration-1) .* oldmean .+ value) ./ iteration
+    end
+
     # Save current iteration to last
-    delete_object(fid, "LAST")
-    create_group(fid, "LAST")
-    lastfid = fid["LAST"]
+    varfid = fid["LAST"]
     for (key, value) in pairs(variables)
+        delete_object(varfid, String(key))
         try
-            lastfid[String(key)] = value
+            varfid[String(key)] = value
         catch
-            lastfid[String(key)] = repr(value)
+            varfid[String(key)] = repr(value)
         end
     end
 
     # If variables is the current maximum a posteriori (MAP) then save to MAP group
     if isMAP
-        delete_object(fid, "MAP")
-        create_group(fid, "MAP")
-        mapfid = fid["MAP"]
+        varfid = fid["MAP"]
         for (key, value) in pairs(variables)
+            delete_object(varfid, String(key))
             try
-                mapfid[String(key)] = value
+                varfid[String(key)] = value
             catch
-                mapfid[String(key)] = repr(value)
+                varfid[String(key)] = repr(value)
             end
         end
     end
@@ -143,12 +164,16 @@ function samplecache_get(self, field)
     # Check for request
     if lowercase(field) == "map"
         # If MAP is requested then get MAP group
-        mapfid = fid["MAP"]
-        output = Dict([(Symbol(key), read(mapfid[key])) for key in keys(mapfid)])
+        varfid = fid["MAP"]
+        output = Dict([(Symbol(key), read(varfid[key])) for key in keys(varfid)])
     elseif lowercase(field) == "last"
         # If Last is requested then get Last group
-        lastfid = fid["LAST"]
-        output = Dict([(Symbol(key), read(lastfid[key])) for key in keys(lastfid)])
+        varfid = fid["LAST"]
+        output = Dict([(Symbol(key), read(varfid[key])) for key in keys(varfid)])
+    elseif lowercase(field) == "mean"
+        # If Last is requested then get Last group
+        varfid = fid["MEAN"]
+        output = Dict([(Symbol(key), read(varfid[key])) for key in keys(varfid)])
     elseif lowercase(field) == "fid"
         # If fid is requested then return fid
         return fid
@@ -171,10 +196,11 @@ mutable struct SampleCache
     path::String
     num_iterations::Union{Int, Nothing}
     fields_to_save::Union{Array, Nothing}
+    fields_to_average::Union{Array, Nothing}
     initialize::Function
     update::Function
     get::Function
-    function SampleCache(name, num_iterations=nothing, fields_to_save=Any[]; path=nothing)
+    function SampleCache(name, num_iterations=nothing, fields_to_save=Any[], fields_to_average=Any[]; path=nothing)
 
         # Set extension for savename
         if lowercase(splitext(name)[2]) != ".h5"
@@ -202,6 +228,7 @@ mutable struct SampleCache
         self.path = path
         self.num_iterations = num_iterations
         self.fields_to_save = fields_to_save
+        self.fields_to_average = fields_to_average
         self.initialize = function (variables)
             samplecache_initialize(self, variables)
         end
@@ -215,7 +242,7 @@ mutable struct SampleCache
         return self
     end
 end
-function SampleCache(name; num_iterations=nothing, fields_to_save=[], path=nothing)
-    self = SampleCache(name, num_iterations, fields_to_save; path=path)
+function SampleCache(name; num_iterations=nothing, fields_to_save=[], fields_to_average=[], path=nothing)
+    self = SampleCache(name, num_iterations, fields_to_save, fields_to_average; path=path)
     return self
 end
