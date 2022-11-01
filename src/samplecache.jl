@@ -54,7 +54,11 @@ function samplecache_initialize(self, variables)
         try 
             mapfid[string(key)] = value
         catch
-            mapfid[string(key)] = repr(value)
+            mapfid[string(key)] = "$(
+                typeof(value)
+            )$(
+                hasmethod(size, Tuple{typeof(value)}) ? size(value) : ()
+            )"
         end
     end
 
@@ -64,7 +68,11 @@ function samplecache_initialize(self, variables)
         try 
             lastfid[string(key)] = value
         catch
-            lastfid[string(key)] = repr(value)
+            lastfid[string(key)] = "$(
+                typeof(value)
+            )$(
+                hasmethod(size, Tuple{typeof(value)}) ? size(value) : ()
+            )"
         end
     end
 
@@ -127,7 +135,11 @@ function samplecache_update(self, variables, iteration; isMAP=false)
         try
             varfid[string(key)] = value
         catch
-            varfid[string(key)] = repr(value)
+            varfid[string(key)] = "$(
+                typeof(value)
+            )$(
+                hasmethod(size, Tuple{typeof(value)}) ? size(value) : ()
+            )"
         end
     end
 
@@ -139,7 +151,11 @@ function samplecache_update(self, variables, iteration; isMAP=false)
             try
                 varfid[string(key)] = value
             catch
-                varfid[string(key)] = repr(value)
+                varfid[string(key)] = "$(
+                    typeof(value)
+                )$(
+                    hasmethod(size, Tuple{typeof(value)}) ? size(value) : ()
+                )"
             end
         end
     end
